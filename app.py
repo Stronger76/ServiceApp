@@ -393,19 +393,23 @@ def client_api(code):
 # ---- Init demo data ----
 @app.before_first_request
 def init_db():
-    db.create_all()
-    ws = Workshop.query.filter_by(name='Atelier Demo').first()
-    if not ws:
-        ws = Workshop(name='Atelier Demo', branding_color='#2563eb')
-        db.session.add(ws); db.session.commit()
-    user = User.query.filter_by(username='demo').first()
-    if not user:
-        user = User(username='demo', role='admin', workshop_id=ws.id)
-        user.set_password('demo')
-        db.session.add(user); db.session.commit()
-    # demo mechanic
-    if not Mechanic.query.filter_by(workshop_id=ws.id).first():
-        db.session.add(Mechanic(name='Mecanic Demo', workshop_id=ws.id)); db.session.commit()
+    with app.app_context():
+        db.create_all()
+        ws = Workshop.query.filter_by(name='Atelier Demo').first()
+        if not ws:
+            ws = Workshop(name='Atelier Demo', branding_color='#2563eb')
+            db.session.add(ws); db.session.commit()
+        user = User.query.filter_by(username='demo').first()
+        if not user:
+            user = User(username='demo', role='admin', workshop_id=ws.id)
+            user.set_password('demo')
+            db.session.add(user); db.session.commit()
+        if not Mechanic.query.filter_by(workshop_id=ws.id).first():
+            db.session.add(Mechanic(name='Mecanic Demo', workshop_id=ws.id)); db.session.commit()
+
+# Flask 3.x: dipatcher replace for before_first_request
+with app.app_context():
+    init_db()
 
 # ---- Run ----
 if __name__ == '__main__':
