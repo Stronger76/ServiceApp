@@ -1,6 +1,6 @@
 
 import os
-from datetime import datetime, date
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify, flash, abort, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, current_user, login_required, logout_user
@@ -9,10 +9,8 @@ from werkzeug.utils import secure_filename
 import pdfkit
 import secrets, string as _string
 
-# --- App & DB config ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-# DATABASE_URL (Render/PG) or SQLite fallback
 db_url = os.environ.get('DATABASE_URL')
 if db_url:
     if db_url.startswith('postgres://'):
@@ -26,7 +24,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'schimba-aceasta-cheie')
 
-# Uploads
 ALLOWED_LOGO_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
 UPLOAD_FOLDER = os.path.join(basedir, 'static', 'logos')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -35,7 +32,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- Models ---
 class Workshop(db.Model):
     __tablename__ = 'workshops'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,9 +47,8 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default='user')  # 'admin' sau 'user'
+    role = db.Column(db.String(20), default='user')
     workshop_id = db.Column(db.Integer, db.ForeignKey('workshops.id'), nullable=False)
-
     def set_password(self, pw): self.password_hash = generate_password_hash(pw)
     def check_password(self, pw): return check_password_hash(self.password_hash, pw)
 
@@ -85,18 +80,14 @@ class FisaDeLucru(db.Model):
     total_net = db.Column(db.Integer, default=0)
     vat_amount = db.Column(db.Integer, default=0)
     total_gross = db.Column(db.Integer, default=0)
-    # public client access
     public_code = db.Column(db.String(16), unique=True)
     client_nume = db.Column(db.String(120))
     client_telefon = db.Column(db.String(40))
     workshop_id = db.Column(db.Integer, db.ForeignKey('workshops.id'), nullable=False)
     articole_lista = db.relationship('ArticolLucrare', backref='fisa_de_lucru', lazy=True, cascade="all, delete-orphan")
 
-# Utils
 ALLOWED_STATUSES = {'asteptare','in lucru','finalizat'}
-
-def status_label(s):
-    return {'asteptare':'în așteptare','in lucru':'în lucru','finalizat':'finalizat'}.get(s,s)
+def status_label(s): return {'asteptare':'în așteptare','in lucru':'în lucru','finalizat':'finalizat'}.get(s,s)
 
 def _wkhtmltopdf_config():
     candidates = [
@@ -114,11 +105,9 @@ def _gen_public_code(n=8):
     alphabet = _string.ascii_uppercase + _string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(n))
 
-# Login loader
 @login_manager.user_loader
 def load_user(uid): return User.query.get(int(uid))
 
-# ---- PWA assets at root ----
 @app.route('/manifest.webmanifest')
 def manifest_webmanifest():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.webmanifest', mimetype='application/manifest+json')
@@ -127,7 +116,6 @@ def manifest_webmanifest():
 def service_worker():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'sw.js', mimetype='application/javascript')
 
-# ---- Auth ----
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -146,13 +134,11 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# ---- Home ----
 @app.route('/')
 @login_required
 def home():
     return render_template('home.html', workshop_name=current_user.workshop.name if current_user.workshop else '-', user=current_user)
 
-# ---- Formular fișă ----
 @app.route('/formular', methods=['GET','POST'])
 @login_required
 def index():
@@ -163,7 +149,6 @@ def index():
         descriere_generala = request.form.get('descriere_generala','')
         client_nume = request.form.get('client_nume','')
         client_telefon = request.form.get('client_telefon','')
-
         durata_ore = float(request.form.get('durata_ore','0') or 0)
         status = request.form.get('status','asteptare')
         vat_rate = int(request.form.get('vat_rate','21') or 21)
@@ -176,27 +161,23 @@ def index():
             code = _gen_public_code()
 
         f = FisaDeLucru(
-            nr_inmatriculare=nr_inmatriculare, tip_auto=tip_auto,
-            nume_mecanic=nume_mecanic, descriere_generala=descriere_generala,
-            client_nume=client_nume or None, client_telefon=client_telefon or None,
+            nr_inmatriculare=nr_inmatriculare, tip_auto=tip_auto, nume_mecanic=nume_mecanic,
+            descriere_generala=descriere_generala, client_nume=client_nume or None, client_telefon=client_telefon or None,
             durata_ore=durata_ore, status=(status if status in ALLOWED_STATUSES else 'asteptare'),
             vat_rate=vat_rate, total_net=total_net, vat_amount=vat_amount, total_gross=total_gross,
-            public_code=code, workshop_id=current_user.workshop_id, )
+            public_code=code, workshop_id=current_user.workshop_id)
         db.session.add(f); db.session.commit()
         flash('Fișa a fost creată.', 'ok')
         return redirect(url_for('listare'))
-    # GET
     mecs = Mechanic.query.filter_by(workshop_id=current_user.workshop_id).all()
     return render_template('index.html', mecanici=mecs, user=current_user)
 
-# ---- Listare fișe ----
 @app.route('/listare')
 @login_required
 def listare():
     fise = FisaDeLucru.query.filter_by(workshop_id=current_user.workshop_id).order_by(FisaDeLucru.id.desc()).all()
     return render_template('listare.html', fise=fise, status_label=status_label)
 
-# ---- Mecanici ----
 @app.route('/mecanici', methods=['GET','POST'])
 @login_required
 def gestioneaza_mecanici():
@@ -218,7 +199,6 @@ def sterge_mecanic(id):
     flash('Mecanic șters.', 'ok')
     return redirect(url_for('gestioneaza_mecanici'))
 
-# ---- PDF ----
 @app.route('/pdf/<int:id>')
 @login_required
 def generare_pdf(id):
@@ -235,7 +215,6 @@ def generare_pdf(id):
     resp.headers['Content-Disposition'] = f'inline; filename=Fisa_{fisa.nr_inmatriculare}_{fisa.id}.pdf'
     return resp
 
-# ---- Dashboard ----
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -246,38 +225,28 @@ def dashboard():
 @app.route('/api/dashboard_data')
 @login_required
 def api_dashboard_data():
-    # Filters
     mechanics = (request.args.get('mechanics') or '').split(',') if request.args.get('mechanics') else []
     statuses = (request.args.get('status') or '').split(',') if request.args.get('status') else []
-    start = request.args.get('start')
-    end = request.args.get('end')
-
+    start = request.args.get('start'); end = request.args.get('end')
+    from datetime import datetime as _dt
     q = FisaDeLucru.query.filter_by(workshop_id=current_user.workshop_id)
-    if mechanics:
-        q = q.filter(FisaDeLucru.nume_mecanic.in_(mechanics))
-    if statuses:
-        q = q.filter(FisaDeLucru.status.in_(statuses))
+    if mechanics: q = q.filter(FisaDeLucru.nume_mecanic.in_(mechanics))
+    if statuses: q = q.filter(FisaDeLucru.status.in_(statuses))
     if start:
-        try:
-            d = datetime.strptime(start, "%Y-%m-%d"); q = q.filter(FisaDeLucru.data >= d)
+        try: q = q.filter(FisaDeLucru.data >= _dt.strptime(start,"%Y-%m-%d"))
         except: pass
     if end:
         try:
-            d2 = datetime.strptime(end, "%Y-%m-%d"); q = q.filter(FisaDeLucru.data < d2.replace(hour=23, minute=59, second=59))
+            d2 = _dt.strptime(end,"%Y-%m-%d")
+            d2 = d2.replace(hour=23,minute=59,second=59)
+            q = q.filter(FisaDeLucru.data <= d2)
         except: pass
-
     rows = q.all()
-    kpis = {
-        'total_revenue_gross': sum(r.total_gross or r.total_net or 0 for r in rows),
-        'total_revenue_net': sum(r.total_net or 0 for r in rows),
-        'total_vat': sum(r.vat_amount or 0 for r in rows),
-        'job_count': len(rows)
-    }
-    # Aggregations
-    by_month = {}
-    by_mech = {}
-    status_dist = {}
-    daily = {}
+    kpis = {'total_revenue_gross': sum(r.total_gross or r.total_net or 0 for r in rows),
+            'total_revenue_net': sum(r.total_net or 0 for r in rows),
+            'total_vat': sum(r.vat_amount or 0 for r in rows),
+            'job_count': len(rows)}
+    by_month = {}; by_mech = {}; status_dist = {}; daily = {}
     for r in rows:
         mkey = r.data.strftime("%Y-%m")
         by_month[mkey] = by_month.get(mkey, 0) + (r.total_gross or 0)
@@ -285,7 +254,6 @@ def api_dashboard_data():
         status_dist[r.status] = status_dist.get(r.status, 0) + 1
         dkey = r.data.strftime("%Y-%m-%d")
         daily[dkey] = daily.get(dkey, 0) + 1
-
     return jsonify({
         'kpis': kpis,
         'revenue_by_month': [{'month': k, 'value': v} for k, v in sorted(by_month.items())],
@@ -294,7 +262,6 @@ def api_dashboard_data():
         'daily_jobs': [{'date': k, 'count': v} for k, v in sorted(daily.items())]
     })
 
-# ---- Admin: workshops + branding ----
 def admin_required(fn):
     from functools import wraps
     @wraps(fn)
@@ -354,7 +321,6 @@ def admin_branding(wid):
         return redirect(url_for('admin_branding', wid=ws.id))
     return render_template('admin/branding.html', ws=ws)
 
-# ---- Client public ----
 @app.route('/client', methods=['GET','POST'])
 def client_lookup():
     if request.method == 'POST':
@@ -382,23 +348,13 @@ def client_api(code):
     items = [{'descriere': a.descriere, 'cantitate': a.cantitate, 'pret_unitar': a.pret_unitar,
               'total': int((a.cantitate or 0) * (a.pret_unitar or 0))} for a in f.articole_lista]
     return jsonify({
-        'code': f.public_code,
-        'status': f.status, 'status_label': status_label(f.status),
+        'code': f.public_code, 'status': f.status, 'status_label': status_label(f.status),
         'nr_inmatriculare': f.nr_inmatriculare, 'tip_auto': f.tip_auto, 'nume_mecanic': f.nume_mecanic,
         'descriere_generala': f.descriere_generala,
         'total_net': f.total_net, 'vat_amount': f.vat_amount, 'total_gross': f.total_gross,
         'data': f.data.isoformat(), 'items': items
     })
 
-# ---- Init demo data ----
-@app.before_first_request
-# --- RÉGI (törlendő) ---
-# @app.before_first_request
-# def init_db():
-#     db.create_all()
-#     ...
-
-# --- ÚJ (használd ezt) ---
 def init_db():
     with app.app_context():
         db.create_all()
@@ -406,22 +362,18 @@ def init_db():
         if not ws:
             ws = Workshop(name='Atelier Demo', branding_color='#2563eb')
             db.session.add(ws); db.session.commit()
-
         user = User.query.filter_by(username='demo').first()
         if not user:
             user = User(username='demo', role='admin', workshop_id=ws.id)
             user.set_password('demo')
             db.session.add(user); db.session.commit()
-
+        elif not user.workshop_id:
+            user.workshop_id = ws.id; db.session.commit()
         if not Mechanic.query.filter_by(workshop_id=ws.id).first():
             db.session.add(Mechanic(name='Mecanic Demo', workshop_id=ws.id)); db.session.commit()
 
-# Flask 3.x: dipatcher replace for before_first_request
-# Egyértelmű, idempotens inicializálás induláskor
-if os.environ.get("INIT_DB_ON_STARTUP", "1") == "1":
+with app.app_context():
     init_db()
 
-
-# ---- Run ----
 if __name__ == '__main__':
     app.run(debug=True)

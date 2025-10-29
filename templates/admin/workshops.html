@@ -1,8 +1,1 @@
-
-<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Ateliere • Admin</title>
-<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}.wrap{max-width:900px;margin:40px auto;padding:0 16px}
-.card{background:rgba(17,24,39,.7);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}input{padding:10px;border-radius:10px;border:1px solid #374151;background:#111827;color:#e5e7eb}</style></head>
-<body><div class="wrap"><h1>Ateliere</h1>
-<form method="POST" action="{{ url_for('admin_create_workshop') }}" class="card"><label>Nume atelier</label> <input name="name" required> <button class="btn" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px;margin-left:8px">Creează</button></form>
-<div class="card" style="margin-top:12px"><ul>{% for w in workshops %}<li>ID {{ w.id }} – {{ w.name }} • <a style="color:#93c5fd" href="{{ url_for('admin_branding', wid=w.id) }}">Branding</a></li>{% endfor %}</ul></div>
-<p><a href="{{ url_for('admin_home') }}" style="color:#9ca3af">Înapoi</a></p></div></body></html>
+<!DOCTYPE html><html><body><form method='POST' action='{{ url_for('admin_create_workshop') }}'><input name='name'><button>Create</button></form><ul>{% for w in workshops %}<li>{{ w.name }} - <a href='{{ url_for('admin_branding', wid=w.id) }}'>Branding</a></li>{% endfor %}</ul></body></html>

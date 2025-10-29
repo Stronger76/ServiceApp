@@ -1,4 +1,3 @@
-
 <!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Fișă nouă • ServiceApp</title>
 <style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}
 header{display:flex;justify-content:space-between;align-items:center;padding:18px;background:rgba(17,24,39,.8);border-bottom:1px solid rgba(255,255,255,.08)}
@@ -12,14 +11,10 @@ label{display:block;margin-top:10px}input,select,textarea{width:100%;padding:10p
 <form method="POST">
   <label>Număr înmatriculare</label><input name="nr_inmatriculare" required>
   <label>Tip auto</label><input name="tip_auto" required>
-  <label>Mecanic</label>
-  <select name="nume_mecanic" required>
-    {% for m in mecanici %}<option value="{{ m.name }}">{{ m.name }}</option>{% endfor %}
-  </select>
+  <label>Mecanic</label><select name="nume_mecanic" required>{% for m in mecanici %}<option value="{{ m.name }}">{{ m.name }}</option>{% endfor %}</select>
   <label>Descriere</label><textarea name="descriere_generala" rows="4"></textarea>
   <label>Durata (ore)</label><input name="durata_ore" type="number" step="0.1" value="0">
-  <label>Status</label>
-  <select name="status"><option value="asteptare">în așteptare</option><option value="in lucru">în lucru</option><option value="finalizat">finalizat</option></select>
+  <label>Status</label><select name="status"><option value="asteptare">în așteptare</option><option value="in lucru">în lucru</option><option value="finalizat">finalizat</option></select>
   <label>TVA (%)</label><input name="vat_rate" type="number" value="21">
   <label>Total net (RON)</label><input name="total_net_ascuns" type="number" value="0">
   <label>TVA (RON)</label><input name="vat_amount_ascuns" type="number" value="0">

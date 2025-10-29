@@ -1,10 +1,7 @@
 {
   "name": "ServiceApp",
   "short_name": "ServiceApp",
-  "description": "Fișe de lucru auto, PDF, dashboard și urmărire client.",
-  "lang": "ro",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#0b1020",
   "theme_color": "#2563eb",
@@ -12,11 +9,6 @@
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/static/icons/icon-512.png",
-      "sizes": "512x512",
       "type": "image/png"
     }
   ]
