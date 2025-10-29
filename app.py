@@ -392,6 +392,13 @@ def client_api(code):
 
 # ---- Init demo data ----
 @app.before_first_request
+# --- RÉGI (törlendő) ---
+# @app.before_first_request
+# def init_db():
+#     db.create_all()
+#     ...
+
+# --- ÚJ (használd ezt) ---
 def init_db():
     with app.app_context():
         db.create_all()
@@ -399,17 +406,21 @@ def init_db():
         if not ws:
             ws = Workshop(name='Atelier Demo', branding_color='#2563eb')
             db.session.add(ws); db.session.commit()
+
         user = User.query.filter_by(username='demo').first()
         if not user:
             user = User(username='demo', role='admin', workshop_id=ws.id)
             user.set_password('demo')
             db.session.add(user); db.session.commit()
+
         if not Mechanic.query.filter_by(workshop_id=ws.id).first():
             db.session.add(Mechanic(name='Mecanic Demo', workshop_id=ws.id)); db.session.commit()
 
 # Flask 3.x: dipatcher replace for before_first_request
-with app.app_context():
+# Egyértelmű, idempotens inicializálás induláskor
+if os.environ.get("INIT_DB_ON_STARTUP", "1") == "1":
     init_db()
+
 
 # ---- Run ----
 if __name__ == '__main__':
