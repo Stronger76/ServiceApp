@@ -1,0 +1,12 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><title>Urmărire reparație • ServiceApp</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;width:min(520px,94vw)}
+h1{margin:0 0 10px}label{font-weight:600}input{width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#111827;color:#e5e7eb;margin-top:8px}
+button.btn{width:100%;margin-top:14px;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}.msg{color:#f87171;margin-top:10px}.hint{font-size:13px;color:#9ca3af;margin-top:8px}</style></head>
+<body><form class="card" method="POST"><h1>Verifică statusul reparației</h1>
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="msg">{{ messages[-1] }}</div>{% endif %}{% endwith %}
+<label>Cod urmărire</label><input name="code" placeholder="ex. 7F2K9A1C" required>
+<div class="hint">Codul este generat automat la înregistrarea fișei (ex. <b>7F2K9A1C</b>).</div>
+<button class="btn" type="submit">Afișează status</button></form></body></html>

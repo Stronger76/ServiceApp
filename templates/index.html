@@ -1,0 +1,34 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Fișă nouă • ServiceApp</title>
+<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px;background:rgba(17,24,39,.8);border-bottom:1px solid rgba(255,255,255,.08)}
+.wrap{max-width:900px;margin:20px auto;padding:0 16px}
+form{background:rgba(17,24,39,.7);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
+label{display:block;margin-top:10px}input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #374151;background:#111827;color:#e5e7eb}
+.btn{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 14px;font-weight:700;cursor:pointer;margin-top:12px}</style></head>
+<body>
+<header><div><b>Fișă nouă</b></div><div><a class="btn" href="{{ url_for('home') }}" style="background:#6b7280;text-decoration:none">Înapoi</a></div></header>
+<div class="wrap">
+<form method="POST">
+  <label>Număr înmatriculare</label><input name="nr_inmatriculare" required>
+  <label>Tip auto</label><input name="tip_auto" required>
+  <label>Mecanic</label>
+  <select name="nume_mecanic" required>
+    {% for m in mecanici %}<option value="{{ m.name }}">{{ m.name }}</option>{% endfor %}
+  </select>
+  <label>Descriere</label><textarea name="descriere_generala" rows="4"></textarea>
+  <label>Durata (ore)</label><input name="durata_ore" type="number" step="0.1" value="0">
+  <label>Status</label>
+  <select name="status"><option value="asteptare">în așteptare</option><option value="in lucru">în lucru</option><option value="finalizat">finalizat</option></select>
+  <label>TVA (%)</label><input name="vat_rate" type="number" value="21">
+  <label>Total net (RON)</label><input name="total_net_ascuns" type="number" value="0">
+  <label>TVA (RON)</label><input name="vat_amount_ascuns" type="number" value="0">
+  <label>Total brut (RON)</label><input name="total_gross_ascuns" type="number" value="0">
+  <div style="margin-top:10px; background:rgba(255,255,255,.04); padding:10px; border-radius:8px">
+    <label>Nume client (opțional)</label><input name="client_nume" placeholder="ex. Popescu Ion">
+    <label style="margin-top:8px; display:block">Telefon client (opțional)</label><input name="client_telefon" placeholder="ex. 07xx xxx xxx">
+    <div style="font-size:12px; color:#9ca3af; margin-top:6px">Se va genera automat un <b>cod de urmărire</b> pentru client.</div>
+  </div>
+  <button class="btn" type="submit">Salvează</button>
+</form>
+</div></body></html>

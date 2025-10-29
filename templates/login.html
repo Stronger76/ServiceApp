@@ -1,0 +1,22 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Autentificare • ServiceApp</title>
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;width:min(420px,94vw)}
+label{display:block;margin-top:8px}input{width:100%;padding:10px;border-radius:10px;border:1px solid #374151;background:#111827;color:#e5e7eb}
+.btn{width:100%;margin-top:14px;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}</style></head>
+<body>
+<form class="card" method="POST">
+  <h1>ServiceApp</h1>
+  {% with messages = get_flashed_messages() %}{% if messages %}<div style="color:#f87171">{{ messages[-1] }}</div>{% endif %}{% endwith %}
+  <label>Utilizator</label><input name="username" placeholder="demo" required>
+  <label>Parolă</label><input name="password" type="password" placeholder="demo" required>
+  <button class="btn" type="submit">Intră</button>
+  <button id="installBtn" class="btn" type="button" style="display:none;margin-top:8px">Instalează aplicația</button>
+  <div style="margin-top:10px;font-size:12px;color:#9ca3af">Demo: <b>demo / demo</b></div>
+</form>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('installBtn');if(b)b.style.display='block';});
+document.getElementById('installBtn').onclick=()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.finally(()=>{document.getElementById('installBtn').style.display='none';deferredPrompt=null;});};</script>
+</body></html>

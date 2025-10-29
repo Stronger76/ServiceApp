@@ -1,0 +1,30 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Acasă • ServiceApp</title>
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#2563eb">
+<style>
+body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px;background:rgba(17,24,39,.8);border-bottom:1px solid rgba(255,255,255,.08)}
+.grid{max-width:900px;margin:20px auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:0 16px}
+.card{background:rgba(17,24,39,.7);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px;text-decoration:none;color:#e5e7eb}
+.btn{background:#2563eb;color:#fff;text-decoration:none;padding:10px 12px;border-radius:10px;margin-left:8px}
+</style></head>
+<body style="--brand: {{ user.workshop.branding_color if user and user.workshop and user.workshop.branding_color else '#2563eb' }}">
+<header>
+  <div class="brand">
+    {% if user.workshop.logo_path %}<img src="{{ url_for('static', filename=user.workshop.logo_path) }}" style="height:32px;vertical-align:middle;margin-right:10px">{% endif %}
+    <b>ServiceApp</b> • {{ workshop_name }}
+  </div>
+  <div>
+    <a class="btn" href="{{ url_for('logout') }}" style="background:#6b7280">Deconectare</a>
+  </div>
+</header>
+<div class="grid">
+  <a class="card" href="{{ url_for('index') }}">➕ Fișă nouă</a>
+  <a class="card" href="{{ url_for('listare') }}">📄 Lista fișelor</a>
+  <a class="card" href="{{ url_for('gestioneaza_mecanici') }}">👷 Mecanici</a>
+  <a class="card" href="{{ url_for('dashboard') }}">📊 Tablou de bord</a>
+  {% if user.role == 'admin' %}<a class="card" href="{{ url_for('admin_home') }}">🛠️ Administrare</a>{% endif %}
+  <a class="card" href="/client">🌐 Modul client</a>
+</div>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}</script>
+</body></html>

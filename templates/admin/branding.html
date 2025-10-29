@@ -1,0 +1,15 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><title>Branding atelier • Admin</title>
+<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}.wrap{max-width:720px;margin:40px auto;padding:0 16px}
+.card{background:rgba(17,24,39,.7);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
+label{display:block;margin-top:10px;font-weight:600}input{width:100%;padding:10px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:#e5e7eb}
+.btn{display:inline-block;padding:10px 12px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;border:none;cursor:pointer;margin-top:12px}
+img.logo{max-width:220px;display:block;margin-top:10px;border-radius:10px;background:#fff;padding:8px}.msg{color:#a3e635}</style></head>
+<body><div class="wrap"><h1>Branding atelier</h1>{% with messages = get_flashed_messages() %}{% if messages %}<div class="msg">{{ messages[-1] }}</div>{% endif %}{% endwith %}
+<form class="card" method="post" enctype="multipart/form-data">
+  <p><b>Atelier:</b> {{ ws.name }} (ID {{ ws.id }})</p>
+  <label>Culoare principală</label><input name="branding_color" value="{{ ws.branding_color or '#2563eb' }}">
+  <label>Logo (PNG/JPG/SVG/WebP)</label><input type="file" name="logo" accept=".png,.jpg,.jpeg,.gif,.svg,.webp">
+  {% if ws.logo_path %}<img class="logo" src="{{ url_for('static', filename=ws.logo_path) }}" alt="Logo atelier">{% endif %}
+  <button class="btn" type="submit">Salvează</button> <a class="btn" href="{{ url_for('admin_workshops') }}" style="background:#6b7280">Înapoi</a>
+</form></div></body></html>

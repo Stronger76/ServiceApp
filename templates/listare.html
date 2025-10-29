@@ -1,0 +1,26 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><title>Lista fișelor • ServiceApp</title>
+<style>body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0}header{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(17,24,39,0.8);border-bottom:1px solid rgba(255,255,255,0.1)}
+h1{margin:0;font-size:24px}.btn{background:#2563eb;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:600}
+.wrap{max-width:1100px;margin:20px auto;padding:0 20px}table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border-bottom:1px solid rgba(255,255,255,0.1);padding:10px;text-align:left}th{background:rgba(37,99,235,0.2)}tr:hover{background:rgba(255,255,255,0.05)}
+.status{display:inline-block;padding:3px 8px;border-radius:6px;font-size:13px;text-transform:capitalize}.asteptare{background:#f59e0b33;color:#fcd34d}.in-lucru{background:#2563eb33;color:#93c5fd}.finalizat{background:#10b98133;color:#6ee7b7}
+.placeholder{text-align:center;padding:60px 20px;font-size:18px;color:#9ca3af}</style></head>
+<body><header><h1>Lista fișelor</h1><div><a class="btn" href="{{ url_for('index') }}">Fișă nouă</a><a class="btn" href="{{ url_for('home') }}" style="background:#6b7280;margin-left:8px">Înapoi</a></div></header>
+<div class="wrap">
+{% if not fise %}
+  <div class="placeholder">📄 Nu există încă fișe înregistrate.<br><br>Creează una nouă apăsând <b>„Fișă nouă”</b>.</div>
+{% else %}
+<table><thead><tr><th>ID</th><th>Cod public</th><th>Data</th><th>Nr. înmatriculare</th><th>Tip auto</th><th>Mecanic</th><th>Status</th><th>Total (RON)</th><th>PDF</th></tr></thead><tbody>
+{% for f in fise %}
+<tr>
+  <td>{{ f.id }}</td><td>{{ f.public_code or '—' }}</td><td>{{ f.data.strftime('%d.%m.%Y %H:%M') }}</td>
+  <td>{{ f.nr_inmatriculare }}</td><td>{{ f.tip_auto }}</td><td>{{ f.nume_mecanic }}</td>
+  <td><span class="status {{ f.status|replace(' ','-') }}">{{ status_label(f.status) }}</span></td>
+  <td>{{ f.total_gross or f.total_net or 0 }}</td>
+  <td><a class="btn" style="background:#10b981" href="{{ url_for('generare_pdf', id=f.id) }}" target="_blank">PDF</a></td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+</div></body></html>

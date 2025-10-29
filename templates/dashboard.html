@@ -1,0 +1,72 @@
+
+<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><title>Tablou de bord • ServiceApp</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Inter,system-ui,Arial;background:#0b1020;color:#e5e7eb;margin:0;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(17,24,39,.8);border-bottom:1px solid rgba(255,255,255,.1)}
+h1{margin:0;font-size:24px}.btn{background:#2563eb;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:600;border:none;cursor:pointer}
+.wrap{max-width:1200px;margin:20px auto;padding:0 20px}.filters{display:grid;grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:10px;background:rgba(17,24,39,.6); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,.08)}
+label{font-size:13px;color:#cbd5e1}input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #374151;background:#111827;color:#e5e7eb;margin-top:6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}.card{background:rgba(17,24,39,.7);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
+.kpi-title{font-size:13px;color:#9ca3af;margin:0 0 6px}.kpi-value{font-size:26px;font-weight:800;margin:0}.section{margin-top:18px}.placeholder{text-align:center;padding:50px 20px;color:#9ca3af;border:1px dashed rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.02)}.muted{color:#9ca3af}
+</style></head>
+<body><header><h1>Tablou de bord</h1><div><a class="btn" href="{{ url_for('home') }}" style="background:#6b7280">Înapoi</a></div></header>
+<div class="wrap">
+<form class="filters" id="filters">
+  <div><label>Mecanic(i)</label><select id="mechanics" multiple>{% for m in mecanici %}<option value="{{ m.name }}">{{ m.name }}</option>{% endfor %}</select>
+    <div class="muted">Ține Ctrl/Cmd pentru selecție multiplă</div></div>
+  <div><label>Status</label><select id="status" multiple>{% for s in statuses %}<option value="{{ s }}">{{ status_label(s) }}</option>{% endfor %}</select></div>
+  <div><label>De la</label><input type="date" id="start"></div>
+  <div><label>Până la</label><input type="date" id="end"></div>
+  <div style="align-self:end"><button type="button" class="btn" id="apply">Aplică filtre</button></div>
+</form>
+
+<div class="kpis" id="kpis">
+  <div class="card"><p class="kpi-title">Venit brut</p><p class="kpi-value" id="kpi_gross">—</p></div>
+  <div class="card"><p class="kpi-title">Venit net</p><p class="kpi-value" id="kpi_net">—</p></div>
+  <div class="card"><p class="kpi-title">TVA</p><p class="kpi-value" id="kpi_vat">—</p></div>
+  <div class="card"><p class="kpi-title">Număr lucrări</p><p class="kpi-value" id="kpi_jobs">—</p></div>
+</div>
+
+<div class="section"><h2>Grafice & statistici</h2>
+  <div id="charts_placeholder" class="placeholder">📊 Nu sunt încă date statistice disponibile pentru filtrele selectate.<br>Creează câteva fișe sau ajustează perioada / filtrele, apoi apasă <b>„Aplică filtre”</b>.</div>
+  <div class="section" id="charts_block" style="display:none">
+    <div class="kpis" style="grid-template-columns:1fr 1fr;">
+      <div class="card"><canvas id="chart_revenue_by_month" height="120"></canvas></div>
+      <div class="card"><canvas id="chart_status" height="120"></canvas></div>
+    </div>
+    <div class="kpis" style="grid-template-columns:1fr 1fr;">
+      <div class="card"><canvas id="chart_revenue_by_mechanic" height="120"></canvas></div>
+      <div class="card"><canvas id="chart_daily_jobs" height="120"></canvas></div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function selValues(selectEl){return Array.from(selectEl.selectedOptions).map(o=>o.value)}
+function fmtRON(n){try{return new Intl.NumberFormat('ro-RO').format(n)+' RON'}catch{return (n||0)+' RON'}}
+async function loadDashboard(){
+  const mechanics=selValues(document.getElementById('mechanics'));
+  const status=selValues(document.getElementById('status'));
+  const start=document.getElementById('start').value;
+  const end=document.getElementById('end').value;
+  const qs=new URLSearchParams(); if(mechanics.length)qs.set('mechanics',mechanics.join(',')); if(status.length)qs.set('status',status.join(',')); if(start)qs.set('start',start); if(end)qs.set('end',end);
+  let data; try{const res=await fetch('/api/dashboard_data?'+qs.toString(),{credentials:'same-origin'}); if(!res.ok) throw new Error('Network'); data=await res.json();}catch(e){document.getElementById('charts_placeholder').innerHTML='❗ Eroare la încărcarea datelor.';return;}
+  const k=data.kpis||{}; const jobs=Number(k.job_count||0);
+  document.getElementById('kpi_gross').textContent=fmtRON(k.total_revenue_gross||0);
+  document.getElementById('kpi_net').textContent=fmtRON(k.total_revenue_net||0);
+  document.getElementById('kpi_vat').textContent=fmtRON(k.total_vat||0);
+  document.getElementById('kpi_jobs').textContent=jobs;
+  const ph=document.getElementById('charts_placeholder'); const chartsBlock=document.getElementById('charts_block');
+  if(!jobs){chartsBlock.style.display='none'; ph.style.display='block'; return;} else {ph.style.display='none'; chartsBlock.style.display='block';}
+  const rbm=(data.revenue_by_month||[]), statusDist=(data.status_distribution||[]), rbmech=(data.revenue_by_mechanic||[]), daily=(data.daily_jobs||[]);
+  window.__charts ||= {}; Object.values(window.__charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  window.__charts.rbm=new Chart(document.getElementById('chart_revenue_by_month').getContext('2d'),{type:'bar',data:{labels:rbm.map(r=>r.month),datasets:[{label:'Venit brut / lună (RON)',data:rbm.map(r=>r.value)}]}});
+  window.__charts.status=new Chart(document.getElementById('chart_status').getContext('2d'),{type:'pie',data:{labels:statusDist.map(s=>s.label),datasets:[{data:statusDist.map(s=>s.count)}]}});
+  window.__charts.rbmech=new Chart(document.getElementById('chart_revenue_by_mechanic').getContext('2d'),{type:'bar',data:{labels:rbmech.map(r=>r.mechanic),datasets:[{label:'Venit brut / mecanic (RON)',data:rbmech.map(r=>r.value)}]}});
+  window.__charts.daily=new Chart(document.getElementById('chart_daily_jobs').getContext('2d'),{type:'line',data:{labels:daily.map(d=>d.date),datasets:[{label:'Lucrări/zi',data:daily.map(d=>d.count),tension:.2}]}});
+}
+document.getElementById('apply').addEventListener('click',loadDashboard); loadDashboard();
+</script>
+</body></html>
